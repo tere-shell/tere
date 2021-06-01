@@ -1,0 +1,4 @@
+/* highlight destination when following links with anchors */
+:target {
+    background-color: #ffa;
+ }

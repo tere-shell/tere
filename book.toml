@@ -1,0 +1,31 @@
+[book]
+title = "Tere Documentation"
+author = "Tommi Virtanen"
+src = "doc"
+
+[rust]
+edition = 2018
+
+[build]
+build-dir = "target/book"
+
+[output.html]
+# Using path prefixes for the `additional-*` values seems to put them under that same path in the output, which is a little ugly.
+# The only alternative would seem to be to delegate this whole book thing into a subdirectory, but then the actual content would be a subdirectory of that, ruining source code reading and discoverability.
+
+additional-css = ["doc/custom.css"]
+# there has got to be a better way to do this
+additional-js = ["doc/mermaid.min.js", "doc/mermaid-init.js"]
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.linkcheck]
+follow-web-links = false
+
+[preprocessor.graphviz]
+command = "mdbook-graphviz"
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"

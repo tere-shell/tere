@@ -1,0 +1,21 @@
+digraph {
+    network [shape=plaintext]
+    server
+    user [label="user@"]
+    policy [label="policy@"]
+    sessions
+    dbus [shape=box, color=blue]
+    systemd [label="systemd FDSTORE", shape=box, color=blue]
+    pty [label="pty@"]
+
+    network -> server [arrowhead=crow]
+    node [minlen=0]
+    server -> policy [arrowhead=crow]
+    server -> user [arrowhead=crow]
+    user -> policy [dir=none, style=dashed]
+    policy -> sessions
+    sessions -> dbus [color=blue]
+    sessions -> systemd [color=blue]
+    sessions -> pty [arrowhead=crow, weight=100]
+    user -> pty [dir=none, style=dashed]
+}

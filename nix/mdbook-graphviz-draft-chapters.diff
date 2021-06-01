@@ -1,0 +1,43 @@
+diff --git c/src/preprocessor.rs i/src/preprocessor.rs
+index 156c3e7..d586f76 100644
+--- c/src/preprocessor.rs
++++ i/src/preprocessor.rs
+@@ -40,17 +40,21 @@ impl Preprocessor for GraphvizPreprocessor {
+             // only continue editing the book if we don't have any errors
+             if error.is_ok() {
+                 if let BookItem::Chapter(ref mut chapter) = item {
+-                    let path = chapter.path.as_ref().unwrap();
+-                    let mut full_path = src_dir.join(path);
++                    let path = chapter.path.as_ref();
++                    // draft chapters do not have paths
++                    if let Some(path) = path {
++                        let mut full_path = src_dir.join(path);
+ 
+-                    // remove the chapter filename
+-                    full_path.pop();
++                        // remove the chapter filename
++                        full_path.pop();
+ 
+-                    error = if !output_to_file {
+-                        Graphviz::<CLIGraphviz>::new().process_chapter(chapter, &full_path)
+-                    } else {
+-                        Graphviz::<CLIGraphvizToFile>::new().process_chapter(chapter, &full_path)
+-                    };
++                        error = if !output_to_file {
++                            Graphviz::<CLIGraphviz>::new().process_chapter(chapter, &full_path)
++                        } else {
++                            Graphviz::<CLIGraphvizToFile>::new()
++                                .process_chapter(chapter, &full_path)
++                        };
++                    }
+                 }
+             }
+         });
+@@ -64,7 +68,6 @@ impl Preprocessor for GraphvizPreprocessor {
+     }
+ }
+ 
+-
+ impl<R: GraphvizRenderer> Graphviz<R> {
+     fn new() -> Graphviz<R> {
+         Graphviz {

@@ -16,5 +16,9 @@ stdenv.mkDerivation {
     rust
     cargo-edit
     cargo-watch
+    mdbook
+    (callPackage ./nix/mdbook-linkcheck.nix { })
+    (callPackage ./nix/mdbook-graphviz.nix { })
+    (callPackage ./nix/mdbook-mermaid.nix { })
   ];
 }
