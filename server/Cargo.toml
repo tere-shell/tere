@@ -5,3 +5,6 @@ authors = ["Tommi Virtanen <tv@eagain.net>"]
 edition = "2018"
 
 [dependencies]
+thiserror = "1.0.25"
+zbus = "1.9.1"
+zvariant = "2.6.0"
