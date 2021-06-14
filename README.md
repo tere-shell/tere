@@ -3,7 +3,7 @@
 *Tere* is Estonian for hello.
 *Terebra* is Latin for a mechanism to bore holes in fortified walls.
 It's also a genus of sea snails with distinctive shells.
-*Tere* also happens to an abbreviation of *ter*minal *e*mulator.
+*Tere* also happens to be an abbreviation of *ter*minal *e*mulator.
 
 Tere is a radical rethinking of the terminal emulator + SSH ecosystem.
 As such, it's an experiment that might go nowhere; that's okay.
