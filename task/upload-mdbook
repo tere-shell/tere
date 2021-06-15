@@ -1,0 +1,44 @@
+#!/bin/sh
+set -e
+
+. "$(git --exec-path)/git-sh-setup"
+cd_to_toplevel
+
+mdbook build
+
+export INDEX="$GIT_DIR/mdbook.index"
+rm -f -- "$INDEX"
+find target/book/html/ -type f -print0 \
+| GIT_INDEX_FILE="$INDEX" git update-index --add -z --stdin
+
+TREE="$(GIT_INDEX_FILE="$INDEX" git write-tree --prefix=target/book/html/)"
+
+FROM="$(git describe --always --dirty)"
+COMMIT="$(GIT_INDEX_FILE="$INDEX" git commit-tree "$TREE" <<EOF
+Build mdbook from $FROM
+EOF
+)"
+echo "commit $COMMIT"
+
+# Annoyingly we have to manually track possible inputs to mdbook.
+# Alternative would be abort on *any* change in the working tree, but that triggers too easily.
+git status --porcelain=v1 --no-renames --untracked-files=normal --ignored=no \
+    -- \
+    book.toml \
+    README.md \
+    doc/ \
+    server/systemd/ \
+    >"$GIT_DIR/mdbook.dirty"
+if [ -s "$GIT_DIR/mdbook.dirty" ]; then
+    echo "$(basename "$0"): dirty, not publishing" 1>&2
+    cat "$GIT_DIR/mdbook.dirty"
+    exit 0
+fi
+
+if [ "$(git symbolic-ref HEAD)" != "refs/heads/main" ]; then
+    echo "$(basename "$0"): not on main, not publishing" 1>&2
+    exit 0
+fi
+
+echo 'pushing...'
+git push https://github.com/tere-shell/guide +"$COMMIT":refs/heads/main 1>&2
