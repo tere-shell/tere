@@ -1,6 +1,7 @@
 digraph {
     network [shape=plaintext]
     server
+    auth
     user [label="user@"]
     policy [label="policy@"]
     sessions
@@ -10,8 +11,10 @@ digraph {
 
     network -> server [arrowhead=crow]
     node [minlen=0]
-    server -> policy [arrowhead=crow]
-    server -> user [arrowhead=crow]
+    server -> auth
+    auth -> policy [arrowhead=crow]
+    auth -> user [arrowhead=crow]
+    server -> user [dir=none, style=dashed]
     user -> policy [dir=none, style=dashed]
     policy -> sessions
     sessions -> dbus [color=blue]
