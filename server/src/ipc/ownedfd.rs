@@ -8,6 +8,7 @@ pub struct OwnedFd(RawFd);
 
 impl FromRawFd for OwnedFd {
     unsafe fn from_raw_fd(fd: RawFd) -> Self {
+        debug_assert!(fd >= 0);
         Self(fd)
     }
 }
