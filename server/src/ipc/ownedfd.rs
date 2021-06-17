@@ -28,7 +28,6 @@ impl IntoRawFd for OwnedFd {
 
 impl Drop for OwnedFd {
     fn drop(&mut self) {
-        // let fd = self.
         let _ = unsafe { libc::close(self.0) };
     }
 }
