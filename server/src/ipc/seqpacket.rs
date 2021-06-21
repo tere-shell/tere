@@ -25,8 +25,8 @@ use thiserror::Error;
 
 // Using unstable feature `unix_socket_ancillary_data`.
 // https://github.com/rust-lang/rust/issues/76915
+use std::os::unix::io::AsRawFd;
 use std::os::unix::net::SocketAncillary;
-use std::os::unix::prelude::AsRawFd;
 
 use crate::ipc;
 use crate::ipc::ownedfd::OwnedFd;

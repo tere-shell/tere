@@ -6,7 +6,7 @@
 
 // TODO wait on signal MachineRemoved: https://github.com/systemd/systemd/blob/ed056c560b47f84a0aa0289151f4ec91f786d24a/src/machine/machinectl.c#L1403-L1408
 
-use std::os::unix::prelude::{AsRawFd, FromRawFd};
+use std::os::unix::io::{AsRawFd, FromRawFd};
 use thiserror::Error;
 
 mod proxies {
