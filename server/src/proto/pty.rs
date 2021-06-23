@@ -4,6 +4,8 @@ use std::os::unix::net::UnixDatagram;
 use crate::ipc;
 use crate::pty_master::PtyMaster;
 
+pub mod user;
+
 pub const CLIENT_INTENT: &str = "tere 2021-06-11T21:34:03 pty client";
 pub const SERVER_INTENT: &str = "tere 2021-06-11T21:35:37 pty server";
 
