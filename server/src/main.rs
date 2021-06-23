@@ -1,3 +1,3 @@
 fn main() {
-    println!("Hello, world!");
+    tere_server::app::run()
 }
