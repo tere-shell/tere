@@ -16,4 +16,5 @@
 pub mod dbus_shell;
 pub mod ipc;
 pub mod proto;
+pub mod pty_master;
 pub mod services;

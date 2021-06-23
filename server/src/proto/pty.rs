@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::os::unix::net::UnixDatagram;
 
 use crate::ipc;
-use crate::ipc::ownedfd::OwnedFd;
+use crate::pty_master::PtyMaster;
 
 pub const CLIENT_INTENT: &str = "tere 2021-06-11T21:34:03 pty client";
 pub const SERVER_INTENT: &str = "tere 2021-06-11T21:35:37 pty server";
@@ -15,7 +15,7 @@ pub struct Init {
     pub _dummy: u8,
 
     #[serde(with = "ipc::passfd")]
-    pub pty_fd: OwnedFd,
+    pub pty_fd: PtyMaster,
 }
 
 impl ipc::Message for Init {

@@ -1,11 +1,12 @@
 use std::convert::TryFrom;
+use std::os::unix::io::{FromRawFd, IntoRawFd};
 use std::os::unix::net::UnixStream;
 
 use crate::ipc;
-use crate::ipc::ownedfd::OwnedFd;
 use crate::ipc::seqpacket::SeqPacket;
 use crate::ipc::IPC;
 use crate::proto::pty as p;
+use crate::pty_master::PtyMaster;
 
 // RUST-WART https://github.com/rust-lang/rust/issues/29036
 // use super as pty;
@@ -16,6 +17,10 @@ async fn init_then_eof() {
     let (client_socket, server_socket) = ipc::seqpacket::pair().expect("socketpair");
     // TODO we're gonna need an actual PTY once more code is written
     let (_fake_pty, fake_pty_master) = UnixStream::pair().expect("socketpair for fake_pty");
+    let fake_pty_master = {
+        let fd = fake_pty_master.into_raw_fd();
+        unsafe { PtyMaster::from_raw_fd(fd) }
+    };
     let server_task = smol::spawn(async {
         let conn = SeqPacket::try_from(server_socket).unwrap();
         pty::run(conn).await
@@ -28,7 +33,7 @@ async fn init_then_eof() {
         {
             let msg = p::Init {
                 _dummy: 0,
-                pty_fd: OwnedFd::from(fake_pty_master),
+                pty_fd: fake_pty_master,
             };
             conn.send_with_fds(&msg).await.expect("send Init");
         }
