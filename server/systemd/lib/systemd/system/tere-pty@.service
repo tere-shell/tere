@@ -2,6 +2,7 @@
 Description=Internal PTY service for Tere
 
 [Service]
+Type=exec
 ExecStart=/usr/libexec/tere/tere-server serve pty
 StandardInput=socket
 DynamicUser=yes
