@@ -1,0 +1,15 @@
+[Unit]
+Description=Internal PTY service for Tere
+
+[Service]
+ExecStart=/usr/libexec/tere/tere-server serve pty
+StandardInput=socket
+DynamicUser=yes
+SupplementaryGroups=tere-dbus
+CapabilityBoundingSet=
+AmbientCapabilities=
+Umask=0077
+ProtectSubset=pid
+ProtectProc=invisible
+SystemCallFilter=@system-service
+SystemCallArchitectures=native

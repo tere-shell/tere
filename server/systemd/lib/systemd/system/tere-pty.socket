@@ -1,0 +1,12 @@
+[Unit]
+Description=Internal PTY service for Tere
+
+[Socket]
+ListenSequentialPacket=/run/tere/socket/pty.socket
+SocketGroup=tere-socket-pty
+SocketMode=0060
+Accept=yes
+MaxConnections=1000
+
+[Install]
+WantedBy=sockets.target
