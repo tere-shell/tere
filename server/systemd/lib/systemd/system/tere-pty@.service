@@ -6,6 +6,7 @@ Type=exec
 ExecStart=/usr/libexec/tere/tere-server serve pty
 StandardInput=socket
 DynamicUser=yes
+User=tere-pty-%i
 SupplementaryGroups=tere-dbus
 CapabilityBoundingSet=
 AmbientCapabilities=
