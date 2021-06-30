@@ -1,24 +1,13 @@
 //! Handshake performed between an IPC client and server to ensure there is no version mismatch.
 
 use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::io;
-use std::lazy::SyncLazy;
 use thiserror::Error;
 
 use crate::ipc;
 
-static EXECUTABLE_HASH: SyncLazy<blake3::Hash> = SyncLazy::new(|| {
-    let mut file =
-        File::open("/proc/self/exe").expect("cannot read executable for current process");
-    let mut hasher = blake3::Hasher::new();
-    io::copy(&mut file, &mut hasher).expect("cannot read current executable file");
-    hasher.finalize()
-});
-
 fn identify(context: &'static str) -> blake3::Hash {
     let mut out = [0u8; 32];
-    blake3::derive_key(context, EXECUTABLE_HASH.as_bytes(), &mut out);
+    blake3::derive_key(context, env!("TERE_PROTOCOL_IDENTITY").as_bytes(), &mut out);
     blake3::Hash::from(out)
 }
 
