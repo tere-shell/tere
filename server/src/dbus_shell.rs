@@ -7,6 +7,8 @@
 use std::os::unix::io::{AsRawFd, FromRawFd};
 use thiserror::Error;
 
+use crate::pty_master::PtyMaster;
+
 mod proxies {
     // zbus makes these public, avoid exposing them
     // https://gitlab.freedesktop.org/dbus/zbus/-/issues/129
@@ -83,11 +85,7 @@ impl Dbus<'_> {
     /// Create a new shell session.
     ///
     /// Returns the PTY master.
-    pub fn create_shell(&self, spec: &ShellSpec) -> Result<std::fs::File, Error> {
-        // TODO File can be awkward for callers, doesn't allow e.g. separate threads/async tasks for read and write.
-        // Maybe provide some more socket-like FD wrapper.
-        // Then can provide ioctls as methods on that?
-
+    pub fn create_shell(&self, spec: &ShellSpec) -> Result<PtyMaster, Error> {
         // we don't have a use for the pty name
         let (fd, _pty_name) = self.proxy.open_machine_shell(
             spec.machine,
@@ -96,7 +94,7 @@ impl Dbus<'_> {
             spec.args,
             spec.environment,
         )?;
-        let f = unsafe { std::fs::File::from_raw_fd(fd.as_raw_fd()) };
-        Ok(f)
+        let pty = unsafe { PtyMaster::from_raw_fd(fd.as_raw_fd()) };
+        Ok(pty)
     }
 }
