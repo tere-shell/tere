@@ -37,7 +37,7 @@ fn init_then_eof() {
         {
             let msg = p::Init {
                 _dummy: 0,
-                pty_fd: fake_pty_master,
+                pty_master: fake_pty_master,
             };
             conn.send_with_fds(&msg).expect("send Init");
         }
@@ -135,7 +135,7 @@ fn pty_io() {
         {
             let msg = p::Init {
                 _dummy: 0,
-                pty_fd: pty_master,
+                pty_master,
             };
             conn.send_with_fds(&msg).expect("send Init");
         }

@@ -53,7 +53,7 @@ pub fn serve(conn: impl ipc::IPC) -> Result<(), Error> {
 
     let pty = {
         let msg: p::Init = conn.receive_with_fds().map_err(Error::Receive)?;
-        msg.pty_fd
+        msg.pty_master
     };
     // Kludging this via Arc because we need to pass it to multiple tasks.
     // Proper broadcast mechanism, coming later, will deal with this better.

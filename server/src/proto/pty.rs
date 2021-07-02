@@ -17,7 +17,7 @@ pub struct Init {
     pub _dummy: u8,
 
     #[serde(with = "ipc::passfd")]
-    pub pty_fd: PtyMaster,
+    pub pty_master: PtyMaster,
 }
 
 impl ipc::Message for Init {
