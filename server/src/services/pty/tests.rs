@@ -135,7 +135,7 @@ fn pty_io() {
         {
             let msg = p::Init {
                 _dummy: 0,
-                pty_fd: PtyMaster::from(pty_master),
+                pty_fd: pty_master,
             };
             conn.send_with_fds(&msg).expect("send Init");
         }
@@ -155,7 +155,7 @@ fn pty_io() {
             p::user::SERVER_INTENT,
         )
         .expect("handshake as pty_user client");
-        const GREETING: &'static [u8] = b"hello, world\n";
+        const GREETING: &[u8] = b"hello, world\n";
         {
             let msg = p::user::Input::KeyboardInput(Vec::from(GREETING));
             user_conn.send_with_fds(&msg).expect("send KeyboardInput");

@@ -90,8 +90,7 @@ mod tests {
             file.write_all_at(b"hello, world", 0)
                 .expect("write to memfd");
             let fd = file.into_raw_fd();
-            let owned = unsafe { OwnedFd::from_raw_fd(fd) };
-            owned
+            unsafe { OwnedFd::from_raw_fd(fd) }
         };
         // this must NOT close the FD
         let raw_fd = owned.into_raw_fd();
