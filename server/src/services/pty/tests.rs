@@ -148,17 +148,17 @@ fn pty_io() {
         }
 
         // Now acting as pty_user client
-        let user_conn = SeqPacket::try_from(user_client_socket).unwrap();
-        ipc::handshake::handshake_as_client(
-            &user_conn,
-            p::user::CLIENT_INTENT,
-            p::user::SERVER_INTENT,
-        )
-        .expect("handshake as pty_user client");
         const GREETING: &[u8] = b"hello, world\n";
         {
-            let msg = p::user::Input::KeyboardInput(Vec::from(GREETING));
-            user_conn.send_with_fds(&msg).expect("send KeyboardInput");
+            use crate::proto::pty::user as p;
+
+            let user_conn = SeqPacket::try_from(user_client_socket).unwrap();
+            ipc::handshake::handshake_as_client(&user_conn, p::CLIENT_INTENT, p::SERVER_INTENT)
+                .expect("handshake as pty_user client");
+            {
+                let msg = p::Input::KeyboardInput(Vec::from(GREETING));
+                user_conn.send_with_fds(&msg).expect("send KeyboardInput");
+            }
         }
 
         // Read our input from the PTY child.

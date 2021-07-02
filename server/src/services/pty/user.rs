@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::ipc;
 use crate::ipc::handshake;
-use crate::proto::pty as p;
+use crate::proto::pty::user as p;
 use crate::pty_master::PtyMaster;
 
 #[derive(Error, Debug)]
@@ -26,7 +26,7 @@ pub(super) fn serve_user(
     pty: Arc<PtyMaster>,
     conn: impl ipc::IPC + Sync + Send + 'static,
 ) -> Result<(), ServeUserError> {
-    handshake::handshake_as_server(&conn, p::user::CLIENT_INTENT, p::user::SERVER_INTENT)
+    handshake::handshake_as_server(&conn, p::CLIENT_INTENT, p::SERVER_INTENT)
         .map_err(ServeUserError::Handshake)?;
 
     let conn = Arc::new(conn);
@@ -36,10 +36,9 @@ pub(super) fn serve_user(
         let conn = conn.clone();
         move || {
             loop {
-                let message: p::user::Input =
-                    conn.receive_with_fds().map_err(ServeUserError::Receive)?;
+                let message: p::Input = conn.receive_with_fds().map_err(ServeUserError::Receive)?;
                 match &message {
-                    p::user::Input::KeyboardInput(input) => {
+                    p::Input::KeyboardInput(input) => {
                         // TODO this currently blocks further input processing.
                         // Backpressure is good, but we probably need to handle resizes and control-C even when the process in the session is not consuming standard input.
                         (&*pty).write_all(input).map_err(ServeUserError::PtyIo)?;
@@ -54,7 +53,7 @@ pub(super) fn serve_user(
             let mut buf = vec![0; 1024];
             let n = (&*pty).read(&mut buf).map_err(ServeUserError::PtyIo)?;
             buf.truncate(n);
-            let message = p::user::Output::SessionOutput(buf);
+            let message = p::Output::SessionOutput(buf);
             conn.send_with_fds(&message).map_err(ServeUserError::Send)?;
         }
     });
