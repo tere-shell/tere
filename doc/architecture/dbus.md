@@ -14,7 +14,7 @@ This happens in two steps.
 
 <!-- TODO mdbook include mechanism can't cope with indentation -->
 ```xml
-{{#include ../../server/systemd/share/dbus-1/system.d/50-tere.conf}}
+{{#include ../../server/systemd/share/dbus-1/system.d/org.tere-shell.conf}}
 ```
 
 ```shell
