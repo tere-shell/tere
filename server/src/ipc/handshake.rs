@@ -44,15 +44,14 @@ pub enum Error {
     WrongService,
 }
 
-pub async fn handshake_as_client(
+pub fn handshake_as_client(
     conn: &impl ipc::IPC,
     client_intent: &'static str,
     server_intent: &'static str,
 ) -> Result<(), Error> {
     conn.send_with_fds(&Handshake::new(client_intent))
-        .await
         .map_err(Error::Send)?;
-    let msg: Handshake = conn.receive_with_fds().await.map_err(Error::Receive)?;
+    let msg: Handshake = conn.receive_with_fds().map_err(Error::Receive)?;
     let server_build_id = identify(server_intent);
     if server_build_id != msg.build_id {
         return Err(Error::WrongVersion);
@@ -63,12 +62,12 @@ pub async fn handshake_as_client(
     Ok(())
 }
 
-pub async fn handshake_as_server(
+pub fn handshake_as_server(
     conn: &impl ipc::IPC,
     client_intent: &'static str,
     server_intent: &'static str,
 ) -> Result<(), Error> {
-    let msg: Handshake = conn.receive_with_fds().await.map_err(Error::Receive)?;
+    let msg: Handshake = conn.receive_with_fds().map_err(Error::Receive)?;
     let client_build_id = identify(client_intent);
     if client_build_id != msg.build_id {
         return Err(Error::WrongVersion);
@@ -77,7 +76,6 @@ pub async fn handshake_as_server(
         return Err(Error::WrongService);
     }
     conn.send_with_fds(&Handshake::new(server_intent))
-        .await
         .map_err(Error::Send)?;
     Ok(())
 }
@@ -88,8 +86,8 @@ mod tests {
 
     use super::*;
 
-    #[smol_potat::test]
-    async fn client_simple() {
+    #[test]
+    fn client_simple() {
         let conn = FakeIpc::new();
         {
             let c2 = conn.clone();
@@ -109,12 +107,11 @@ mod tests {
             "tere 2021-06-10T13:38:10 testing client",
             "tere 2021-06-10T13:38:43 testing server",
         )
-        .await
         .expect("handshake_as_client");
     }
 
-    #[smol_potat::test]
-    async fn client_simple_disconnected() {
+    #[test]
+    fn client_simple_disconnected() {
         let conn = FakeIpc::new();
         conn.shutdown();
 
@@ -123,7 +120,6 @@ mod tests {
             "tere 2021-06-10T13:38:10 testing client",
             "tere 2021-06-10T13:38:43 testing server",
         )
-        .await
         .expect_err("handshake should have failed in this test");
         match error {
             Error::Receive(ipc::ReceiveError::Socket(socket_error)) => {
@@ -138,8 +134,8 @@ mod tests {
         }
     }
 
-    #[smol_potat::test]
-    async fn server_simple() {
+    #[test]
+    fn server_simple() {
         let conn = FakeIpc::new();
         conn.add(Handshake::new("tere 2021-06-10T13:38:10 testing client"));
 
@@ -148,7 +144,6 @@ mod tests {
             "tere 2021-06-10T13:38:10 testing client",
             "tere 2021-06-10T13:38:43 testing server",
         )
-        .await
         .expect("handshake_as_client");
     }
 }

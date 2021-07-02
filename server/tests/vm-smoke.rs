@@ -35,12 +35,8 @@ fn pty_dynamic_user_isolation() {
     let _clients: Vec<SeqPacket> = (0..2)
         .map(|_| {
             let conn = connect_to_seqpacket(path).expect("connect");
-            smol::block_on(ipc::handshake::handshake_as_client(
-                &conn,
-                p::CLIENT_INTENT,
-                p::SERVER_INTENT,
-            ))
-            .expect("handshake");
+            ipc::handshake::handshake_as_client(&conn, p::CLIENT_INTENT, p::SERVER_INTENT)
+                .expect("handshake");
             conn
         })
         .collect();

@@ -10,10 +10,8 @@
 // At that time, Message::MAX_SIZE and Message:MAX_FDS handling need to switch from current message to max of all possible messages.
 // Or, we just avoid the whole syscall overhead issue with io_uring.
 
-use async_trait::async_trait;
 use bincode::Options;
 use serde::{de::DeserializeOwned, Serialize};
-use smol::Async;
 use std::collections::VecDeque;
 use std::convert::TryFrom;
 use std::io::{IoSlice, IoSliceMut};
@@ -54,15 +52,13 @@ pub fn pair() -> std::io::Result<(UnixDatagram, UnixDatagram)> {
 
 /// Implement the IPC abstraction for UNIX domain `SOCK_SEQPACKET` sockets.
 pub struct SeqPacket {
-    socket: Async<UnixDatagram>,
+    socket: UnixDatagram,
 }
 
 #[derive(Error, Debug)]
 pub enum SocketConversionError {
     #[error("not a SOCK_SEQPACKET")]
     NotSeqPacket,
-    #[error("I/O error: {0}")]
-    Io(#[from] smol::io::Error),
 }
 
 fn is_seq_packet(socket: &impl AsRawFd) -> bool {
@@ -86,10 +82,10 @@ fn is_seq_packet(socket: &impl AsRawFd) -> bool {
 }
 
 /// The socket must be of `SOCK_SEQPACKET`, and connected.
-impl TryFrom<Async<UnixDatagram>> for SeqPacket {
+impl TryFrom<UnixDatagram> for SeqPacket {
     type Error = SocketConversionError;
 
-    fn try_from(socket: Async<UnixDatagram>) -> Result<Self, Self::Error> {
+    fn try_from(socket: UnixDatagram) -> Result<Self, Self::Error> {
         if !is_seq_packet(&socket) {
             return Err(SocketConversionError::NotSeqPacket);
         }
@@ -97,20 +93,10 @@ impl TryFrom<Async<UnixDatagram>> for SeqPacket {
     }
 }
 
-impl TryFrom<UnixDatagram> for SeqPacket {
-    type Error = SocketConversionError;
-
-    fn try_from(socket: UnixDatagram) -> Result<Self, Self::Error> {
-        let a = Async::new(socket).map_err(SocketConversionError::Io)?;
-        Self::try_from(a)
-    }
-}
-
-#[async_trait]
 impl ipc::IPC for SeqPacket {
-    async fn send_with_fds<M>(&self, message: &M) -> Result<(), ipc::SendError>
+    fn send_with_fds<M>(&self, message: &M) -> Result<(), ipc::SendError>
     where
-        M: ipc::Message + Serialize + Sync,
+        M: ipc::Message + Serialize,
     {
         // It would be nicer if we could just return a SocketAncillary and let caller deal with it.
         // Unfortunately, SocketAncillary borrows the buffer, so that doesn't work.
@@ -144,14 +130,13 @@ impl ipc::IPC for SeqPacket {
 
         let iovec = &mut [IoSlice::new(&encoded[..])][..];
         self.socket
-            .write_with(|socket| socket.send_vectored_with_ancillary(iovec, &mut ancillary))
-            .await
+            .send_vectored_with_ancillary(iovec, &mut ancillary)
             .map_err(ipc::SendError::Socket)?;
 
         Ok(())
     }
 
-    async fn receive_with_fds<M>(&self) -> Result<M, ipc::ReceiveError>
+    fn receive_with_fds<M>(&self) -> Result<M, ipc::ReceiveError>
     where
         M: ipc::Message + DeserializeOwned,
     {
@@ -172,8 +157,7 @@ impl ipc::IPC for SeqPacket {
 
         let (size, truncated) = self
             .socket
-            .read_with(|socket| socket.recv_vectored_with_ancillary(iovec, &mut ancillary))
-            .await
+            .recv_vectored_with_ancillary(iovec, &mut ancillary)
             .map_err(ipc::ReceiveError::Socket)?;
         if truncated {
             // If we had flags|=MSG_TRUNC, we could report the sent size.
@@ -231,7 +215,6 @@ impl ipc::IPC for SeqPacket {
 mod tests {
     use memfd;
     use serde::{Deserialize, Serialize};
-    use smol::Async;
     use std::convert::TryFrom;
     use std::fs::File;
     use std::io::Read;
@@ -265,8 +248,8 @@ mod tests {
         fds.len() == orig_len
     }
 
-    #[smol_potat::test]
-    async fn roundtrip() {
+    #[test]
+    fn roundtrip() {
         let opts = memfd::MemfdOptions::new().close_on_exec(true);
         let send_one = opts.create("one").expect("memfd_create").into_file();
         // Use write_at variant so cursor stays at 0 for later consumption.
@@ -281,20 +264,14 @@ mod tests {
         };
 
         let (sender, receiver) = seqpacket::pair().expect("socketpair");
-        let sender = {
-            let a = Async::new(sender).expect("Async::new");
-            SeqPacket::try_from(a).expect("SeqPacket::try_from")
-        };
+        let sender = SeqPacket::try_from(sender).expect("SeqPacket::try_from");
         // Assume the socket buffer is large enough that we can first send, and only then receive.
 
         println!("send: {:?}", msg);
-        sender.send_with_fds(&msg).await.expect("sendmsg");
+        sender.send_with_fds(&msg).expect("sendmsg");
 
-        let receiver = {
-            let a = Async::new(receiver).expect("Async::new");
-            SeqPacket::try_from(a).expect("SeqPacket::try_from")
-        };
-        let mut got: DummyMessage = receiver.receive_with_fds().await.expect("recvmsg");
+        let receiver = SeqPacket::try_from(receiver).expect("SeqPacket::try_from");
+        let mut got: DummyMessage = receiver.receive_with_fds().expect("recvmsg");
         println!("receive: {:?}", got);
         assert_eq!(msg.greeting, got.greeting);
         assert!(got.one.as_raw_fd() >= 0);

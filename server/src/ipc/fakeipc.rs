@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use std::any::Any;
 use std::boxed::Box;
 use std::collections::VecDeque;
@@ -11,12 +10,12 @@ struct State {
     // Can't use ipc::Message as the trait here, as that brings the wrath of object safety on us: <https://doc.rust-lang.org/reference/items/traits.html#object-safety>.
     // If I switch the MAX_SIZE and MAX_FDS consts to functions, 1) they have to have `self` or they trip object safety rules again 2) with `&self` it works, except then we can't downcast to the correct concrete message type anymore.
     // So, stuck with Any we are.
-    incoming: VecDeque<Box<dyn Any + Send>>,
+    incoming: VecDeque<Box<dyn Any>>,
     shutdown: bool,
     // Similar scenario here as as with incoming, except this time, we'd be happy with `&Message` instead of `Message`.
     // Can't use `FnOnce(Box<&dyn ipc::Message>)` because of object safety.
     // Unfortunately it seems every checker has to do its own downcasting.
-    expectations: VecDeque<Box<dyn FnOnce(&dyn Any) + Send>>,
+    expectations: VecDeque<Box<dyn FnOnce(&dyn Any)>>,
 }
 
 #[derive(Clone)]
@@ -35,7 +34,7 @@ impl FakeIpc {
         }
     }
 
-    pub fn add<M: 'static + ipc::Message + Send>(&self, message: M) {
+    pub fn add<M: 'static + ipc::Message>(&self, message: M) {
         let mut guard = self.state.lock().expect("poisoned mutex");
         guard.incoming.push_back(Box::new(message));
     }
@@ -48,18 +47,17 @@ impl FakeIpc {
 
     pub fn expect<F>(&self, f: F)
     where
-        F: 'static + FnOnce(&dyn Any) + Send,
+        F: 'static + FnOnce(&dyn Any),
     {
         let mut guard = self.state.lock().expect("poisoned mutex");
         guard.expectations.push_back(Box::new(f));
     }
 }
 
-#[async_trait]
 impl ipc::IPC for FakeIpc {
-    async fn send_with_fds<M: 'static>(&self, message: &M) -> Result<(), ipc::SendError>
+    fn send_with_fds<M: 'static>(&self, message: &M) -> Result<(), ipc::SendError>
     where
-        M: ipc::Message + serde::Serialize + Sync,
+        M: ipc::Message + serde::Serialize,
     {
         println!("send: {:?}", message);
         let exp = {
@@ -74,7 +72,7 @@ impl ipc::IPC for FakeIpc {
         Ok(())
     }
 
-    async fn receive_with_fds<M>(&self) -> Result<M, ipc::ReceiveError>
+    fn receive_with_fds<M>(&self) -> Result<M, ipc::ReceiveError>
     where
         M: 'static + ipc::Message + serde::de::DeserializeOwned,
     {

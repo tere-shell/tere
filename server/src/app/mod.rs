@@ -73,16 +73,9 @@ enum Serve {
 impl Command {
     fn run(&self, global: &GlobalFlags) -> Result<(), Error> {
         match self {
-            // TODO This defaults to $SMOL_THREADS or 1 thread, manage better.
-            // Automatically going for num_cpus isn't necessarily the right thing either.
-            //
-            // smol has a weird design where it starts a global "executor", but doesn't let you control it in any way.
-            // If you run your own, then all uses of `smol::spawn` become a bug.
-            Command::Serve(run) => smol::block_on(async {
-                match run {
-                    Serve::Pty(run) => run.run(global).await.map_err(Error::from),
-                }
-            }),
+            Command::Serve(run) => match run {
+                Serve::Pty(run) => run.run(global).map_err(Error::from),
+            },
         }
     }
 }

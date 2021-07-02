@@ -29,7 +29,6 @@
 //! Anything transported via FD passing is encoded as a unit.
 //! The relevant APIs do not offer a "skip" mechanism at that level.
 
-use async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fmt::Debug;
@@ -85,19 +84,14 @@ pub enum ReceiveError {
 }
 
 /// The IPC trait is a unit-testable abstraction.
-///
-/// RUST-WART the trait method signatures are made nigh-unreadable by [mod@async_trait].
-/// There doesn't seem to much we can do about that, until Rust gets support for `async`in Traits.
-/// <https://rust-lang.github.io/async-book/07_workarounds/05_async_in_traits.html>
-#[async_trait]
 pub trait IPC {
     /// Send a [Message] with the included file descriptors.
-    async fn send_with_fds<M>(&self, message: &M) -> Result<(), SendError>
+    fn send_with_fds<M>(&self, message: &M) -> Result<(), SendError>
     where
-        M: 'static + Message + Serialize + Sync;
+        M: 'static + Message + Serialize;
 
     /// Receive a [Message] and included file descriptors.
-    async fn receive_with_fds<M>(&self) -> Result<M, ReceiveError>
+    fn receive_with_fds<M>(&self) -> Result<M, ReceiveError>
     where
         M: 'static + Message + DeserializeOwned;
 }
