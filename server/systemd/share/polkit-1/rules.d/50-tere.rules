@@ -1,7 +1,7 @@
 polkit.addRule(function (action, subject) {
   if ((action.id == "org.freedesktop.machine1.host-shell" ||
     action.id == "org.freedesktop.machine1.shell") &&
-    subject.groups.includes("tere-dbus") {
+    subject.groups.includes("tere-dbus")) {
     return polkit.Result.YES;
   }
 });
