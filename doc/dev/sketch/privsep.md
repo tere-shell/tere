@@ -89,7 +89,9 @@ It processes authenticated end user requests such as "create a new shell session
 ### `tere-sessions` starts and manages shell sessions
 
 `tere-sessions` uses D-Bus to talk to [`systemd-machined`](https://www.freedesktop.org/software/systemd/man/systemd-machined.service.html) to create shell sessions.
-It holds an extra group memberships `tere-dbus` (that allows the above) and `tere-socket-sessions`.
+D-Bus and Polkit rules allow the user `tere-sessions` as necessary.
+
+It holds an extra group membership `tere-socket-pty`.
 
 For every created shell session, `systemd-machined` returns a PTY FD.
 `tere-sessions` connects to `tere-pty@`, which makes systemd spawn a new process, and hands the PTY FD to that new process.
