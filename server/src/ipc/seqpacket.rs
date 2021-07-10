@@ -19,6 +19,7 @@ use std::os::unix::io::FromRawFd;
 use std::os::unix::io::RawFd;
 use std::os::unix::net::UnixDatagram;
 use std::os::unix::net::{AncillaryData, AncillaryError};
+use std::path::Path;
 use thiserror::Error;
 
 // Using unstable feature `unix_socket_ancillary_data`.
@@ -48,6 +49,20 @@ pub fn pair() -> std::io::Result<(UnixDatagram, UnixDatagram)> {
     let a = unsafe { UnixDatagram::from_raw_fd(fds[0]) };
     let b = unsafe { UnixDatagram::from_raw_fd(fds[1]) };
     Ok((a, b))
+}
+
+impl SeqPacket {
+    pub fn connect<P: AsRef<Path>>(path: P) -> Result<Self, std::io::Error> {
+        let ret =
+            unsafe { libc::socket(libc::AF_UNIX, libc::SOCK_SEQPACKET | libc::SOCK_CLOEXEC, 0) };
+        if ret < 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+        let socket = unsafe { UnixDatagram::from_raw_fd(ret) };
+        socket.connect(path)?;
+
+        Ok(Self { socket })
+    }
 }
 
 /// Implement the IPC abstraction for UNIX domain `SOCK_SEQPACKET` sockets.
