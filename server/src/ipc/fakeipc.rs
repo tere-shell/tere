@@ -39,12 +39,6 @@ impl FakeIpc {
         guard.incoming.push_back(Box::new(message));
     }
 
-    // After all the incoming messages have been received, make the connection appear shut down.
-    pub fn shutdown(&self) {
-        let mut guard = self.state.lock().expect("poisoned mutex");
-        guard.shutdown = true;
-    }
-
     pub fn expect<F>(&self, f: F)
     where
         F: 'static + FnOnce(&dyn Any),
@@ -89,6 +83,17 @@ impl ipc::IPC for FakeIpc {
                 std::io::ErrorKind::UnexpectedEof,
             ))),
             None => panic!("fakeipc has no incoming messages"),
+        }
+    }
+
+    fn shutdown(&self, how: std::net::Shutdown) -> Result<(), ipc::ShutdownError> {
+        match how {
+            std::net::Shutdown::Read => {
+                let mut guard = self.state.lock().expect("poisoned mutex");
+                guard.shutdown = true;
+                Ok(())
+            }
+            _ => todo!(),
         }
     }
 }

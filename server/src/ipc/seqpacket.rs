@@ -209,6 +209,12 @@ impl ipc::IPC for SeqPacket {
         }
         Ok(msg)
     }
+
+    fn shutdown(&self, how: std::net::Shutdown) -> Result<(), ipc::ShutdownError> {
+        self.socket
+            .shutdown(how)
+            .map_err(|source| ipc::ShutdownError::Io { how, source })
+    }
 }
 
 #[cfg(test)]

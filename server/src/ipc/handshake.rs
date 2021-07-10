@@ -83,6 +83,7 @@ pub fn handshake_as_server(
 #[cfg(test)]
 mod tests {
     use crate::ipc::fakeipc::FakeIpc;
+    use crate::ipc::IPC;
 
     use super::*;
 
@@ -113,7 +114,7 @@ mod tests {
     #[test]
     fn client_simple_disconnected() {
         let conn = FakeIpc::new();
-        conn.shutdown();
+        conn.shutdown(std::net::Shutdown::Read).expect("shutdown");
 
         let error = handshake_as_client(
             &conn,

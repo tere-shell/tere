@@ -83,6 +83,15 @@ pub enum ReceiveError {
     TooManyFds { orig: usize, extra: usize },
 }
 
+#[derive(Error, Debug)]
+pub enum ShutdownError {
+    #[error("error shutting down IPC socket for {how:?}: {source}")]
+    Io {
+        how: std::net::Shutdown,
+        source: std::io::Error,
+    },
+}
+
 /// The IPC trait is a unit-testable abstraction.
 pub trait IPC {
     /// Send a [Message] with the included file descriptors.
@@ -94,4 +103,7 @@ pub trait IPC {
     fn receive_with_fds<M>(&self) -> Result<M, ReceiveError>
     where
         M: 'static + Message + DeserializeOwned;
+
+    /// Shuts down the read, write, or both halves of this connection.
+    fn shutdown(&self, how: std::net::Shutdown) -> Result<(), ShutdownError>;
 }
