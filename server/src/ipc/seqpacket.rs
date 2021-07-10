@@ -163,6 +163,9 @@ impl ipc::IPC for SeqPacket {
             // If we had flags|=MSG_TRUNC, we could report the sent size.
             return Err(ipc::ReceiveError::TooLarge);
         }
+        if size == 0 {
+            return Err(ipc::ReceiveError::End);
+        }
         let encoded = &encoded[..size];
 
         let mut fds: VecDeque<OwnedFd> = ancillary

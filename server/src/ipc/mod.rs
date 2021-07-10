@@ -64,6 +64,9 @@ pub enum SendError {
 
 #[derive(Error, Debug)]
 pub enum ReceiveError {
+    #[error("end of stream")]
+    End,
+
     #[error("received more data than expected for this message")]
     TooLarge,
 

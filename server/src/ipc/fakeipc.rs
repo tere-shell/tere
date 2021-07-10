@@ -79,9 +79,7 @@ impl ipc::IPC for FakeIpc {
                 println!("receive: {:?}", m);
                 Ok(m)
             }
-            None if guard.shutdown => Err(ipc::ReceiveError::Socket(std::io::Error::from(
-                std::io::ErrorKind::UnexpectedEof,
-            ))),
+            None if guard.shutdown => Err(ipc::ReceiveError::End),
             None => panic!("fakeipc has no incoming messages"),
         }
     }
