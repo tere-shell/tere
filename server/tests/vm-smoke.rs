@@ -75,8 +75,8 @@ fn pty_dynamic_user_isolation() {
     let duplicates: Vec<u32> = uids
         .iter()
         .filter(|uid| !unique.insert(*uid))
-        .map(|uid| *uid)
+        .copied()
         .collect();
     println!("duplicates={:#?}", duplicates);
-    assert!(duplicates.len() == 0, "duplicate UIDs");
+    assert!(duplicates.is_empty(), "duplicate UIDs");
 }
