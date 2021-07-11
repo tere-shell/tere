@@ -33,6 +33,8 @@ use crate::ipc::ownedfd::OwnedFd;
 /// Create a pair of packet-oriented (`SOCK_SEQPACKET`) sockets that are connected to each others, using `socketpair(2)`.
 ///
 /// Like [std::os::unix::net::UnixStream::pair], except using `SOCK_SEQPACKET`.
+///
+/// See also `SeqPacket::pair`.
 pub fn pair() -> std::io::Result<(UnixDatagram, UnixDatagram)> {
     let mut fds = [0, 0];
     let ret = unsafe {
@@ -62,6 +64,16 @@ impl SeqPacket {
         socket.connect(path)?;
 
         Ok(Self { socket })
+    }
+
+    /// Create a pair of sockets that are connected to each other, and prepare one side for use as `IPC`.
+    /// The other side is returned as just a `UnixDatagram`, as the most common use is passing the FD to a different process, or for tests, calling a `serve` function that expects such.
+    ///
+    /// See also the module-level function `pair`, when you just need the sockets.
+    pub fn pair() -> std::io::Result<(SeqPacket, UnixDatagram)> {
+        let (a, b) = pair()?;
+        let a = Self { socket: a };
+        Ok((a, b))
     }
 }
 
@@ -248,9 +260,6 @@ mod tests {
     use super::SeqPacket;
     use crate::ipc;
     use crate::ipc::IPC;
-    // RUST-WART https://github.com/rust-lang/rust/issues/29036
-    // use super as seqpacket;
-    use super::super::seqpacket;
 
     #[derive(Serialize, Deserialize, Debug)]
     struct DummyMessage {
@@ -287,8 +296,7 @@ mod tests {
             two: send_two,
         };
 
-        let (sender, receiver) = seqpacket::pair().expect("socketpair");
-        let sender = SeqPacket::try_from(sender).expect("SeqPacket::try_from");
+        let (sender, receiver) = SeqPacket::pair().expect("socketpair");
         // Assume the socket buffer is large enough that we can first send, and only then receive.
 
         println!("send: {:?}", msg);
