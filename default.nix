@@ -56,9 +56,9 @@ pkgs.runCommandLocal "tere"
   mkdir $out
   mkdir $out/bin
   cp -a $binaries/bin/* $out/bin/
-  # tere-server is not meant to be run by end users.
+  # tere-server-* is not meant to be run by end users.
   mkdir $out/libexec
-  mv $out/bin/tere-server $out/libexec/
+  mv $out/bin/tere-server-* $out/libexec/
   rmdir --ignore-fail-on-non-empty $out/bin
 
   cp -a $administrivia/* $out/

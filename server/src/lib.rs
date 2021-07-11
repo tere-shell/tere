@@ -13,7 +13,6 @@
 //
 // https://github.com/rust-lang/rust/issues/50784
 
-pub mod app;
 pub mod dbus_shell;
 pub mod ipc;
 pub mod proto;

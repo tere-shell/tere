@@ -16,7 +16,6 @@ blake3 = "0.3.8"
 libc = "0.2.95"
 scopeguard = "1.1.0"
 serde = { version = "1.0.126", features = ["derive"] }
-structopt = { version = "0.3.21", default-features = false, features = ["suggestions", "wrap_help"] }
 thiserror = "1.0.25"
 zbus = "1.9.1"
 zvariant = "2.6.0"

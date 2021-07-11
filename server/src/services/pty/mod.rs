@@ -2,7 +2,6 @@ use std::convert::TryFrom;
 use std::os::unix::io::FromRawFd;
 use std::os::unix::net::UnixDatagram;
 use std::sync::Arc;
-use structopt::StructOpt;
 use thiserror::Error;
 
 use crate::ipc;
@@ -13,12 +12,8 @@ use crate::proto::pty as p;
 
 mod user;
 
-/// Run the `pty@` service
-#[derive(StructOpt, Debug)]
-pub struct Command {}
-
 #[derive(Error, Debug)]
-pub enum CommandError {
+pub enum RunError {
     #[error("cannot use stdin as socket: {0}")]
     StdinAsSocket(seqpacket::SocketConversionError),
 
@@ -26,13 +21,11 @@ pub enum CommandError {
     Run(Error),
 }
 
-impl Command {
-    pub fn run(&self, _global: &crate::app::GlobalFlags) -> Result<(), CommandError> {
-        let socket = unsafe { UnixDatagram::from_raw_fd(0) };
-        let conn = SeqPacket::try_from(socket).map_err(CommandError::StdinAsSocket)?;
-        serve(conn).map_err(CommandError::Run)?;
-        Ok(())
-    }
+pub fn run() -> Result<(), RunError> {
+    let socket = unsafe { UnixDatagram::from_raw_fd(0) };
+    let conn = SeqPacket::try_from(socket).map_err(RunError::StdinAsSocket)?;
+    serve(conn).map_err(RunError::Run)?;
+    Ok(())
 }
 
 #[derive(Error, Debug)]

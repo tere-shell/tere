@@ -3,7 +3,7 @@ Description=Internal PTY service for Tere
 
 [Service]
 Type=exec
-ExecStart=/usr/libexec/tere/tere-server serve pty
+ExecStart=/usr/libexec/tere/tere-server-pty
 StandardInput=socket
 StandardOutput=journal
 StandardError=journal
