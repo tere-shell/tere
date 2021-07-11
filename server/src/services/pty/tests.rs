@@ -19,7 +19,7 @@ use super::super::pty;
 
 #[test]
 fn init_then_eof() {
-    let (client_socket, server_socket) = ipc::seqpacket::pair().expect("socketpair");
+    let (conn, server_socket) = SeqPacket::pair().expect("socketpair");
     // TODO we're gonna need an actual PTY once more code is written
     let (_fake_pty, fake_pty_master) = UnixStream::pair().expect("socketpair for fake_pty");
     let fake_pty_master = {
@@ -30,8 +30,7 @@ fn init_then_eof() {
         let conn = SeqPacket::try_from(server_socket).unwrap();
         pty::serve(conn)
     });
-    let client_task = std::thread::spawn(|| {
-        let conn = SeqPacket::try_from(client_socket).unwrap();
+    let client_task = std::thread::spawn(move || {
         ipc::handshake::handshake_as_client(&conn, p::CLIENT_INTENT, p::SERVER_INTENT)
             .expect("handshake as client");
         {
@@ -120,16 +119,15 @@ fn make_pty() -> Result<(PtyMaster, std::fs::File), MakePtyError> {
 
 #[test]
 fn pty_io() {
-    let (client_socket, server_socket) = ipc::seqpacket::pair().expect("socketpair");
+    let (conn, server_socket) = SeqPacket::pair().expect("socketpair");
     let (pty_master, mut pty_child) = make_pty().expect("make_pty");
-    let (user_client_socket, user_server_socket) = ipc::seqpacket::pair().expect("socketpair");
+    let (user_conn, user_server_socket) = SeqPacket::pair().expect("socketpair");
 
     let server_task = std::thread::spawn(|| {
         let conn = SeqPacket::try_from(server_socket).unwrap();
         pty::serve(conn)
     });
     let client_task = std::thread::spawn(move || {
-        let conn = SeqPacket::try_from(client_socket).unwrap();
         ipc::handshake::handshake_as_client(&conn, p::CLIENT_INTENT, p::SERVER_INTENT)
             .expect("handshake as client");
         {
@@ -152,7 +150,6 @@ fn pty_io() {
         {
             use crate::proto::pty::user as p;
 
-            let user_conn = SeqPacket::try_from(user_client_socket).unwrap();
             ipc::handshake::handshake_as_client(&user_conn, p::CLIENT_INTENT, p::SERVER_INTENT)
                 .expect("handshake as pty_user client");
             {
