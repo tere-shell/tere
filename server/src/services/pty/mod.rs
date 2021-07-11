@@ -59,9 +59,11 @@ pub fn serve(conn: impl ipc::IPC) -> Result<(), Error> {
         match msg {
             p::Request::NewClient { _dummy: _, fd } => {
                 let conn = SeqPacket::try_from(fd).unwrap();
-                std::thread::spawn({
-                    let pty = pty.clone();
-                    move || self::user::serve_user(pty, conn)
+                let pty = pty.clone();
+                std::thread::spawn(move || {
+                    let r = self::user::serve_user(pty, conn);
+                    println!("serve_user exited: {:?}", r);
+                    r
                 });
             }
         }
