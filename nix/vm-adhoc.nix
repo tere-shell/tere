@@ -17,6 +17,10 @@ let
           users = {
             # don't even prompt for the passphrase
             users."root".hashedPassword = "";
+            users."testuser" = {
+              isNormalUser = true;
+              password = "testpassword";
+            };
           };
           services.getty.autologinUser = "root";
           environment.systemPackages = with pkgs; [

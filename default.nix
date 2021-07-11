@@ -57,6 +57,7 @@ pkgs.runCommandLocal "tere"
   mkdir $out/bin
   cp -a $binaries/bin/* $out/bin/
   # tere-server-* is not meant to be run by end users.
+  # TODO Split into multiple chroots.
   mkdir $out/libexec
   mv $out/bin/tere-server-* $out/libexec/
   rmdir --ignore-fail-on-non-empty $out/bin

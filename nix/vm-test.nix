@@ -33,6 +33,12 @@ let
         config = {
           virtualisation.graphics = false;
           services.tere.enable = true;
+          users = {
+            users."testuser" = {
+              isNormalUser = true;
+              password = "testpassword";
+            };
+          };
         };
       };
       testScript = ''

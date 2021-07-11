@@ -1,0 +1,11 @@
+[Unit]
+Description=Internal sessions service for Tere
+
+[Socket]
+ListenSequentialPacket=/run/tere/socket/sessions.socket
+FileDescriptorName=tere-sessions
+SocketGroup=tere-socket-sessions
+SocketMode=0060
+
+[Install]
+WantedBy=sockets.target

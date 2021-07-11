@@ -80,3 +80,73 @@ fn pty_dynamic_user_isolation() {
     println!("duplicates={:#?}", duplicates);
     assert!(duplicates.is_empty(), "duplicate UIDs");
 }
+
+#[test]
+fn sessions_create() {
+    use tere_server::ipc::IPC;
+    let path = Path::new("/run/tere/socket/sessions.socket");
+    let conn = SeqPacket::connect(path).expect("connect");
+
+    let client_socket = {
+        use tere_server::proto::sessions as p;
+        ipc::handshake::handshake_as_client(&conn, p::CLIENT_INTENT, p::SERVER_INTENT)
+            .expect("handshake");
+        let (client_socket, server_socket) = ipc::seqpacket::pair().expect("socketpair");
+        let message = p::Request::CreateShellSession(p::CreateShellSession {
+            fd: server_socket,
+            machine: p::Machine::Host,
+            user: "testuser".to_string(),
+            program: None,
+            args: None,
+            env: None,
+        });
+        conn.send_with_fds(&message).expect("send request");
+        client_socket
+    };
+
+    // now pretend we're the client
+    {
+        let conn = SeqPacket::try_from(client_socket).expect("convert client socket to SeqPacket");
+        use tere_server::proto::pty::user as p;
+        ipc::handshake::handshake_as_client(&conn, p::CLIENT_INTENT, p::SERVER_INTENT)
+            .expect("handshake");
+        {
+            let message = p::Input::KeyboardInput(b"printf '%sbar%s' 'foo' 'quux'\r\n".to_vec());
+            conn.send_with_fds(&message).expect("send input");
+        }
+        let mut output: Vec<u8> = Vec::new();
+        loop {
+            // let result = conn.receive_with_fds::<p::Output>();
+            let message: p::Output = match conn.receive_with_fds() {
+                Ok(m) => m,
+                Err(ipc::ReceiveError::End) => break,
+                Err(error) => panic!("receive output: {:?}", error),
+            };
+            println!("received: {:?}", message);
+            match message {
+                p::Output::SessionOutput(b) => {
+                    println!("output: {}", String::from_utf8_lossy(&b));
+                    output.extend_from_slice(&b);
+                }
+            }
+            // It seems control-D sent too early (before bash is reading?) is just simply ignored.
+            // If that worked, we'd send one right after sending the input, before the loop.
+            // For now, keep sending EOF whenever we receive something, until it is acted on.
+            // This is horrible, and I would love to find documentation about the behavior.
+            {
+                let message = p::Input::KeyboardInput(b"\x04".to_vec());
+                conn.send_with_fds(&message)
+                    .or_else(|error| match error {
+                        ipc::SendError::Socket(inner)
+                            if inner.kind() == std::io::ErrorKind::BrokenPipe =>
+                        {
+                            Ok(())
+                        }
+                        _ => Err(error),
+                    })
+                    .expect("send EOF");
+            }
+        }
+        assert!(String::from_utf8_lossy(&output).contains("foobarquux"));
+    }
+}

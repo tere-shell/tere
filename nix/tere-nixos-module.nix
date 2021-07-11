@@ -54,10 +54,10 @@ in
     # It's stupid that we have to repeat parts of the shipped unit files, for NixOS.
     # We could try parsing the unit files, to keep a single authoritative source.
     # This really belongs in NixOS.
+    systemd.units."tere-sessions.socket".wantedBy = [ "sockets.target" ];
     systemd.units."tere-pty.socket".wantedBy = [ "sockets.target" ];
     # Reimplement sysusers here to allow `users.mutableUsers=true`.
     # This really belongs in NixOS.
     users.groups = parseSysusersToGroups ./../server/systemd/lib/sysusers.d/50-tere.conf;
-    # TODO polkit?
   };
 }

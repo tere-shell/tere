@@ -1,0 +1,18 @@
+[Unit]
+Description=Internal sessions service for Tere
+
+[Service]
+Type=exec
+ExecStart=/usr/libexec/tere/tere-server-sessions
+StandardOutput=journal
+StandardError=inherit
+DynamicUser=yes
+User=tere-sessions
+SupplementaryGroups=tere-socket-pty
+CapabilityBoundingSet=
+AmbientCapabilities=
+UMask=0077
+ProtectProc=invisible
+ProcSubset=pid
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
