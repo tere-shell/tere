@@ -153,7 +153,6 @@ impl ipc::IPC for SeqPacket {
                 }
             }
         };
-        println!("send ancillary: {:?}", ancillary);
 
         let iovec = &mut [IoSlice::new(&encoded[..])][..];
         self.socket
