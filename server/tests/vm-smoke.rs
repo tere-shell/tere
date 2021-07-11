@@ -2,26 +2,12 @@
 
 use std::collections::HashSet;
 use std::convert::TryFrom;
-use std::os::unix::io::FromRawFd;
-use std::os::unix::net::UnixDatagram;
 use std::path::Path;
 
 use tere_server::ipc;
 use tere_server::ipc::seqpacket::SeqPacket;
 
 mod systemd;
-
-fn connect_to_seqpacket(path: &Path) -> Result<SeqPacket, std::io::Error> {
-    let ret = unsafe { libc::socket(libc::AF_UNIX, libc::SOCK_SEQPACKET | libc::SOCK_CLOEXEC, 0) };
-    if ret < 0 {
-        return Err(std::io::Error::last_os_error());
-    }
-    let socket = unsafe { UnixDatagram::from_raw_fd(ret) };
-
-    socket.connect(path)?;
-    let conn = SeqPacket::try_from(socket).expect("cannot convert socket to SeqPacket");
-    Ok(conn)
-}
 
 #[test]
 fn pty_dynamic_user_isolation() {
@@ -34,7 +20,7 @@ fn pty_dynamic_user_isolation() {
     // Complete the handshake so we can be sure that the server process is actually running, and we're not still in socket activation startup.
     let _clients: Vec<SeqPacket> = (0..2)
         .map(|_| {
-            let conn = connect_to_seqpacket(path).expect("connect");
+            let conn = SeqPacket::connect(path).expect("connect");
             ipc::handshake::handshake_as_client(&conn, p::CLIENT_INTENT, p::SERVER_INTENT)
                 .expect("handshake");
             conn
